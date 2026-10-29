@@ -1,0 +1,15 @@
+# SYNTHETIC SAMPLE DATA - representative ledger plus three problem rows.
+# Draw matches ledger direct + F&A charged (95,195.00 + 18,548.40).
+# reported_cumulative_draw: 113743.40
+txn_id,date,vendor,description,category,amount,subaward_id
+T001,2026-01-31,USC Payroll,PI salary Jan,Personnel,15000.00,
+T002,2026-01-31,USC Payroll,Fringe Jan,Fringe,4500.00,
+T003,2026-02-10,Thermo Fisher,Spectrometer,Equipment,12500.00,
+T004,2026-02-15,Fisher Scientific,Reagents,Materials & Supplies,1200.00,
+T005,2026-02-20,Delta Air Lines,Airfare to NSF PI meeting,Travel,640.00,
+T006,2026-03-01,UCLA,Subaward invoice 1,Subawards,55000.00,UCLA-01
+T007,2026-03-05,Workshop,Participant stipends,Participant Support,4000.00,
+T008,2026-03-31,USC,F&A Q1,Indirect (F&A),18548.40,
+T009,2026-03-12,Marriott,Marriott hotel - NSF meeting,Equipment,420.00,
+T010,2026-03-14,Dell,Dell laptop,Equipment,1850.00,
+T011,2026-03-20,Total Wine,Wine for lab celebration,Materials & Supplies,85.00,

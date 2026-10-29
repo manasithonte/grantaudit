@@ -1,0 +1,4 @@
+pydantic>=2.5
+streamlit>=1.40
+pytest>=7
+pypdf>=4  # optional: text-based PDF awards

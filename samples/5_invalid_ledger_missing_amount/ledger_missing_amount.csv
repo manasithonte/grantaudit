@@ -1,0 +1,3 @@
+# SYNTHETIC SAMPLE DATA - ledger missing the amount column.
+txn_id,date,vendor,description,category
+T001,2026-01-31,USC Payroll,PI salary Jan,Personnel

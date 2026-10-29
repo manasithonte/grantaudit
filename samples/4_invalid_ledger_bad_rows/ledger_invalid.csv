@@ -1,0 +1,6 @@
+# SYNTHETIC SAMPLE DATA - deliberately broken ledger (non-numeric amount, bad date, duplicate id).
+txn_id,date,vendor,description,category,amount,subaward_id
+T001,2026-01-31,USC Payroll,PI salary Jan,Personnel,15000.00,
+T002,2026-01-31,USC Payroll,Fringe Jan,Fringe,four thousand five hundred,
+T003,2026-02-30,Thermo Fisher,Spectrometer,Equipment,12500.00,
+T001,2026-02-15,Fisher Scientific,Reagents,Materials & Supplies,1200.00,
