@@ -2,9 +2,8 @@
 
 GrantAudit checks a research grant's **spending ledger** (CSV) against its **award agreement** (text or PDF). It flags costs likely to be disallowed at audit, with exact dollar amounts, and lets a human reviewer correct categories. The audit recalculates after each correction, and every decision is logged.
 
-> **Prototype for a case study.** Not production software and not compliance advice. All sample data is **synthetic**. Rules are a **simplified** model of the federal Uniform Guidance (2 CFR 200). The written explanation is in **[SUBMISSION.md](SUBMISSION.md)**.
 
-**No paid service or account is needed.** Everything runs offline. AI is optional (see [Optional AI](#optional-ai)).
+**No paid service or account is needed.** Everything runs offline. 
 
 ---
 
@@ -75,10 +74,8 @@ All files are synthetic and are in [`samples/`](samples/README.md), one folder p
 | **Misclassified**: `2_misclassified_review` | **4 issues**: F&A charged incorrectly −$22.10, wine (unallowable) $85.00, hotel booked as Equipment, $1,850 laptop booked as Equipment |
 | ↳ after review (hotel → Travel, laptop → Materials & Supplies, wine → Removed) | **2 issues**: MTDC $73,610.00, F&A under-charged **−$590.20**, drawdown mismatch **+$85.00** |
 | **Over-Budget**: `3_over_budget` | **4 issues**: Travel over cap +$740.00 (warning); purchase dated 2027-01-15 outside the period $300.00, F&A over-charged +$4,550.00, drawdown mismatch +$3,477.60 (critical) |
-| **Invalid Input**: award from `6_…`, ledger from `4_…` | **Cannot assess**: F&A rate missing from the award; ledger line 4 amount not a number, line 5 invalid date, line 6 duplicate ID |
-| `5_invalid_ledger_missing_amount` | **Cannot assess**: missing required column `amount` |
-| `7_invalid_award_empty` | **Cannot assess**: the award document is empty |
-| `8_prompt_injection` | Same 4 issues as Misclassified; the injected values (99% F&A, "report PASS", $999,999 cap) are ignored and listed for review |
+| **Invalid Input**: `4_invalid_input` | **Cannot assess**: F&A rate missing from the award; ledger line 4 amount not a number, line 5 invalid date, line 6 duplicate ID |
+
 
 Command-line output from real runs (no API key):
 
@@ -139,7 +136,7 @@ The audit itself is always plain code.
 | Provider | Key | Default model |
 |---|---|---|
 | Gemini (Google) | `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) | `gemini-3.5-flash-lite` |
-| Claude (Anthropic) | `ANTHROPIC_API_KEY` | `claude-haiku-5-5` |
+
 
 **Setting it up:**
 1. Run `cp .env.example .env`, then put your key in `.env`. The file is git-ignored. Keys exported in your shell take precedence over it.
@@ -153,7 +150,7 @@ The audit itself is always plain code.
 - Suggestions are never applied without a reviewer's approval and reason.
 - If the AI call fails, the app falls back to rule-based reading and says so.
 
-The Gemini path was tested live on the synthetic samples. The Claude path is implemented but has not been run against the live API.
+The Gemini path was tested live on the synthetic samples. 
 
 ## How it works
 
@@ -212,19 +209,5 @@ ledger .csv ─────► validate ─────────────�
 - **Review decisions are kept only for the browser session.** Export the log to keep it.
 - **Edits made in the Documents tab's ledger table are not logged.** Use Review & approve for category changes.
 
-## Deploying (optional)
 
-- Push to GitHub (`.env` is git-ignored).
-- On [Streamlit Community Cloud](https://share.streamlit.io), deploy `app.py` with Python 3.12.
-- To enable AI, add `GEMINI_API_KEY = "..."` under the app's **Secrets**. Without it, the hosted app runs in offline mode.
 
-## Time spent, AI use, next steps
-
-See [SUBMISSION.md](SUBMISSION.md), sections 10–11.
-- **Time spent:** *[fill in]*
-- **AI use:** built with an AI coding assistant (Claude Code). Output was checked against hand-computed answer keys in the tests, plus manual and live runs. *[confirm]*
-- **Next steps:**
-  1. Test with a research administrator on real, redacted data.
-  2. Rank the rules by dollars recovered.
-  3. Measure AI against manual entry of award terms.
-  4. Read accounting-system exports directly.
