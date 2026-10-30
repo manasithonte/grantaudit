@@ -74,6 +74,7 @@ class TransactionRow(BaseModel):
     suggested_category: Optional[str] = None
     suggestion_confidence: Optional[float] = None
     suggestion_source: Optional[Literal["ai", "keyword"]] = None
+    suggestion_reason: Optional[str] = None  # shown to the reviewer; never used by the audit
     review_override_category: Optional[str] = None
 
     @field_validator("amount", mode="before")

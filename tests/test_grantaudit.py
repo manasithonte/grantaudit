@@ -512,7 +512,9 @@ def test_minimised_payload_sends_no_vendor_or_exact_amount():
         return "[]"
     suggest_categories(rows, ["Travel"], call=call, minimise=True)
     payload = sent[0]
-    assert "Marriott" in payload  # description words are kept ("Marriott hotel - NSF meeting")
+    assert "Marriott" not in payload and "Dell" not in payload  # vendor names removed from descriptions too
+    assert "[vendor] hotel - NSF meeting" in payload and "[vendor] laptop" in payload  # useful words kept
+    assert "Wine for lab celebration" in payload  # 'Wine' is in vendor 'Total Wine' but is a category signal
     assert "Total Wine" not in payload and "Thermo Fisher" not in payload  # vendors are not sent
     assert "12500" not in payload and "1850" not in payload and "under $10,000" in payload and "at least $10,000" in payload
 
@@ -617,3 +619,18 @@ def test_ai_suggestions_are_used_and_labelled(terms):
     assert (sugg["T009"].suggested_category, sugg["T009"].suggestion_source) == ("Travel", "ai")
     assert (sugg["T010"].suggested_category, sugg["T010"].suggestion_confidence) == ("Equipment", 0.9)  # AI may be wrong
     assert (sugg["T011"].suggested_category, sugg["T011"].suggestion_source) == (REMOVED_CATEGORY, "keyword")
+
+
+def test_suggestions_carry_a_reason(terms):
+    rows, _, _ = load("misclassified")
+    long = "x " * 500
+    call, _ = _fake_llm('[{"txn_id": "T009", "category": "Travel", "confidence": 0.95, "reason": "Airfare  to\\nconference"},'
+                        f' {{"txn_id": "T010", "category": "Equipment", "confidence": 0.9, "reason": "{long}"}},'
+                        ' {"txn_id": "T001", "category": "Personnel", "confidence": 0.9}]')
+    sugg = {r.txn_id: r for r in suggest_categories(rows, list(terms.categories), call=call)}
+    assert sugg["T009"].suggestion_reason == "Airfare to conference"   # whitespace collapsed
+    assert len(sugg["T010"].suggestion_reason) <= 200                    # untrusted text is capped
+    assert sugg["T001"].suggestion_reason is None                        # no reason given -> none invented
+    assert sugg["T011"].suggestion_source == "keyword" and sugg["T011"].suggestion_reason  # rules explain themselves
+    # Reasons are display-only: the audit result is identical with or without them.
+    assert audit(terms, sugg.values(), load("misclassified")[1]) == audit(terms, rows, load("misclassified")[1])

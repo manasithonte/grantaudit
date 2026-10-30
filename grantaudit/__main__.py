@@ -1,8 +1,10 @@
-"""CLI: python -m grantaudit AWARD.txt|pdf LEDGER.csv [--json]"""
+"""CLI: python -m grantaudit AWARD.txt|pdf LEDGER.csv [--json] [--ai]
+
+Offline (rule-based) by default; --ai uses the configured AI provider to read the award."""
 import sys
 from pathlib import Path
 
-from .parsers import parse_award, parse_ledger_csv, pdf_to_text
+from .parsers import parse_award_llm, parse_award_text, parse_ledger_csv, pdf_to_text
 from .reconciler import audit
 
 
@@ -10,15 +12,19 @@ def main(argv=None) -> int:
     from . import llm
     llm.load_dotenv()
     args = list(sys.argv[1:] if argv is None else argv)
-    as_json = "--json" in args
-    args = [a for a in args if a != "--json"]
+    as_json, use_ai = "--json" in args, "--ai" in args
+    args = [a for a in args if a not in ("--json", "--ai")]
+    if use_ai and not llm.available():
+        print("--ai needs GEMINI_API_KEY or ANTHROPIC_API_KEY (e.g. in .env)")
+        return 2
     if len(args) != 2:
         print(__doc__)
         return 2
     award_path, ledger_path = map(Path, args)
     text = pdf_to_text(str(award_path)) if award_path.suffix.lower() == ".pdf" else award_path.read_text()
     rows, summary, errors = parse_ledger_csv(ledger_path.read_text())
-    d = audit(parse_award(text), rows, summary, ledger_errors=errors)
+    terms = parse_award_llm(text) if use_ai else parse_award_text(text)
+    d = audit(terms, rows, summary, ledger_errors=errors)
     if as_json:
         print(d.model_dump_json(indent=2))
         return 0

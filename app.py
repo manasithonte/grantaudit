@@ -18,7 +18,7 @@ import pandas as pd
 import streamlit as st
 
 from grantaudit import llm
-from grantaudit.classifier import suggest_categories
+from grantaudit.classifier import ai_payload, suggest_categories
 from grantaudit.config import FA_CATEGORY, REMOVED_CATEGORY
 from grantaudit.parsers import parse_award_llm, parse_award_text, parse_ledger_csv, pdf_to_text
 from grantaudit.reconciler import apply_review, audit, make_decision
@@ -176,7 +176,8 @@ with st.sidebar:
     use_ai = st.toggle("Use AI to read documents & suggest categories", value=False, disabled=not llm.available(),
                        help="Needs ANTHROPIC_API_KEY or GEMINI_API_KEY (e.g. in .env). The audit maths never uses AI.")
     minimise = st.toggle("Minimise ledger data sent to AI", value=True, disabled=not use_ai,
-                         help="Category suggestions get only masked descriptions and an amount band.")
+                         help="Category suggestions get descriptions with vendor names and digits masked, and an amount band "
+                              "instead of the exact amount. See 'Data sent to AI' in Review & approve.")
     if not llm.available():
         st.caption("No API key found: **offline mode** (rule-based reading). Nothing leaves this machine.")
     elif not use_ai:
@@ -406,6 +407,9 @@ with t_review:
                 "re-evaluate**. The results update and the change is logged.")
     show_all = st.toggle("Show all transactions (not only flagged ones)", value=False)
     review_rows = [r for r in current_rows if show_all or r.txn_id in flagged]
+    if use_ai and current_rows:
+        with st.expander("Data sent to AI for suggestions" + (" (minimised)" if minimise else " (full rows)")):
+            st.dataframe(pd.DataFrame(ai_payload(current_rows, minimise)), hide_index=True, use_container_width=True)
     if use_ai and current_rows and not any(r.suggestion_source == "ai" for r in current_rows):
         st.warning("AI suggestions were unavailable; showing rule-based suggestions instead.")
     if not review_rows:
@@ -422,14 +426,17 @@ with t_review:
             "txn_id": r.txn_id, "description": r.description, "amount": float(r.amount),
             "current": r.effective_category, "suggested": r.suggested_category or "",
             "source": {"ai": "AI", "keyword": "rules"}.get(r.suggestion_source or "", ""),
-            "confidence": r.suggestion_confidence, "new_category": proposed(r), "reason": "",
+            "confidence": r.suggestion_confidence, "why suggested": r.suggestion_reason or "",
+            "new_category": proposed(r), "reason": "",
         } for r in review_rows])
         redited = st.data_editor(
             rdf, hide_index=True, use_container_width=True, key=f"review_{prefill_key}_{prefill}",
-            disabled=["txn_id", "description", "amount", "current", "suggested", "source", "confidence"],
+            disabled=["txn_id", "description", "amount", "current", "suggested", "source", "confidence", "why suggested"],
             column_config={
                 "amount": st.column_config.NumberColumn(format="$%.2f"),
                 "confidence": st.column_config.ProgressColumn(min_value=0, max_value=1, format="%.2f"),
+                "why suggested": st.column_config.TextColumn(help="Explanation from the AI or the keyword rule. "
+                                                             "Advisory only: check it against the transaction."),
                 "new_category": st.column_config.SelectboxColumn("new category", options=options, help="Leave blank to keep"),
                 "reason": st.column_config.TextColumn(help="Required for every change"),
             },
